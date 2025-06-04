@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-4 text-center mb-5">
+            欢迎使用图书管理系统
+            {% if current_user.is_authenticated %}
+            <small class="text-muted d-block fs-6 mt-2">
+                你好，{{ current_user.username }}！
+            </small>
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+{% if not current_user.is_authenticated %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <h5><i class="fas fa-info-circle"></i> 提示</h5>
+            <p class="mb-2">请先 <a href="{{ url_for('auth.login') }}" class="alert-link">登录</a> 或 
+               <a href="{{ url_for('auth.register') }}" class="alert-link">注册</a> 来管理图书。</p>
+            <p class="mb-0"><strong>默认管理员账户：</strong> admin / admin123</p>
+            <p class="mb-0"><strong>默认用户账户：</strong> user / user123</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-book fa-2x mb-3"></i><br>
+                    图书总数
+                </h5>
+                <h2 class="card-text">{{ total_books }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-check-circle fa-2x mb-3"></i><br>
+                    可借阅图书
+                </h5>
+                <h2 class="card-text">{{ available_books }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-times-circle fa-2x mb-3"></i><br>
+                    不可借阅图书
+                </h5>
+                <h2 class="card-text">{{ total_books - available_books }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if recent_books %}
+<div class="row">
+    <div class="col-12">
+        <h3>最近添加的图书</h3>
+        <div class="row">
+            {% for book in recent_books %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ book.title }}</h5>
+                        <p class="card-text">
+                            <strong>作者：</strong>{{ book.author }}<br>
+                            <strong>ISBN：</strong>{{ book.isbn }}<br>
+                            <strong>出版年份：</strong>{{ book.publication_year }}
+                            {% if book.genre %}
+                            <br><strong>类型：</strong>{{ book.genre }}
+                            {% endif %}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-{{ 'success' if book.available else 'secondary' }}">
+                                {{ '可借阅' if book.available else '不可借阅' }}
+                            </span>
+                            <a href="{{ url_for('book.book_detail', id=book.id) }}" class="btn btn-primary btn-sm">
+                                查看详情
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12 text-center">
+        <div class="alert alert-info">
+            <h4>暂无图书</h4>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <p>系统中还没有任何图书，<a href="{{ url_for('book.add_book') }}" class="alert-link">点击这里添加第一本图书</a>。</p>
+            {% else %}
+            <p>系统中还没有任何图书。</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-5">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('book.list_books') }}" class="btn btn-outline-primary btn-lg me-3">
+            <i class="fas fa-list"></i> 查看所有图书
+        </a>
+        {% if current_user.is_authenticated and current_user.is_admin %}
+        <a href="{{ url_for('book.add_book') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus"></i> 添加新图书
+        </a>
+        {% elif current_user.is_authenticated %}
+        <a href="{{ url_for('borrowing.my_borrowings') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-book-reader"></i> 我的借阅
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-sign-in-alt"></i> 登录
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

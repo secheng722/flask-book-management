@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}编辑图书 - 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-edit"></i> 编辑图书：{{ book.title }}</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.title.label(class="form-label") }}
+                            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.author.label(class="form-label") }}
+                            {{ form.author(class="form-control" + (" is-invalid" if form.author.errors else "")) }}
+                            {% if form.author.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.author.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.isbn.label(class="form-label") }}
+                            {{ form.isbn(class="form-control" + (" is-invalid" if form.isbn.errors else "")) }}
+                            {% if form.isbn.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.isbn.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.publication_year.label(class="form-label") }}
+                            {{ form.publication_year(class="form-control" + (" is-invalid" if form.publication_year.errors else "")) }}
+                            {% if form.publication_year.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.publication_year.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.genre.label(class="form-label") }}
+                            {{ form.genre(class="form-select" + (" is-invalid" if form.genre.errors else "")) }}
+                            {% if form.genre.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.genre.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3 d-flex align-items-center">
+                            <div class="form-check">
+                                {{ form.available(class="form-check-input") }}
+                                {{ form.available.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="4") }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('book.book_detail', id=book.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> 取消
+                        </a>
+                        {{ form.submit(class="btn btn-primary", value="更新图书") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}我的借阅记录 - 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>我的借阅记录</h2>
+    
+    <!-- 当前借阅的图书 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-book-open"></i> 当前借阅 
+                <span class="badge badge-primary">{{ active_borrowings|length }}</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if active_borrowings %}
+                <div class="row">
+                    {% for borrowing in active_borrowings %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-left-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ borrowing.book.title }}</h6>
+                                <p class="card-text">
+                                    <small class="text-muted">作者：{{ borrowing.book.author }}</small><br>
+                                    <small class="text-muted">借阅日期：{{ borrowing.borrow_date.strftime('%Y-%m-%d') }}</small><br>
+                                    <small class="text-muted">应还日期：{{ borrowing.due_date.strftime('%Y-%m-%d') }}</small><br>
+                                    {% if borrowing.is_overdue %}
+                                        <span class="badge badge-danger">已逾期</span>
+                                    {% else %}
+                                        <span class="badge badge-success">还有 {{ borrowing.days_until_due }} 天到期</span>
+                                    {% endif %}
+                                </p>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('book.book_detail', id=borrowing.book.id) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i> 查看详情
+                                    </a>
+                                    <form method="POST" action="{{ url_for('borrowing.return_book', borrowing_id=borrowing.id) }}" style="display: inline;" onsubmit="return confirm('确认归还这本书吗？')">
+                                        <button type="submit" class="btn btn-outline-success">
+                                            <i class="fas fa-undo"></i> 归还
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-book fa-3x mb-3"></i>
+                    <p>暂无借阅中的图书</p>
+                    <a href="{{ url_for('book.list_books') }}" class="btn btn-primary">
+                        <i class="fas fa-search"></i> 去借阅图书
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 借阅历史 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-history"></i> 借阅历史
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if history_pagination.items %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>图书</th>
+                                <th>作者</th>
+                                <th>借阅日期</th>
+                                <th>归还日期</th>
+                                <th>借阅天数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for borrowing in history_pagination.items %}
+                            <tr>
+                                <td>{{ borrowing.book.title }}</td>
+                                <td>{{ borrowing.book.author }}</td>
+                                <td>{{ borrowing.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ borrowing.return_date.strftime('%Y-%m-%d') if borrowing.return_date else '-' }}</td>
+                                <td>
+                                    {% if borrowing.return_date %}
+                                        {{ (borrowing.return_date - borrowing.borrow_date).days }}天
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('book.book_detail', id=borrowing.book.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> 查看
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                {% if history_pagination.pages > 1 %}
+                <nav aria-label="分页导航">
+                    <ul class="pagination justify-content-center">
+                        {% if history_pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('borrowing.my_borrowings', page=history_pagination.prev_num) }}">上一页</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in history_pagination.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != history_pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('borrowing.my_borrowings', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if history_pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('borrowing.my_borrowings', page=history_pagination.next_num) }}">下一页</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-history fa-2x mb-3"></i>
+                    <p>暂无借阅历史</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

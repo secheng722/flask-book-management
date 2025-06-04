@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}借阅管理 - 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>借阅管理</h2>
+    
+    <!-- 统计信息 -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">当前借阅</h6>
+                            <h3>{{ active_borrowings|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-book-open fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">逾期未还</h6>
+                            <h3>{{ overdue_borrowings|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">总借阅记录</h6>
+                            <h3>{{ all_pagination.total }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 逾期借阅 -->
+    {% if overdue_borrowings %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-exclamation-triangle"></i> 逾期借阅
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>用户</th>
+                            <th>图书</th>
+                            <th>借阅日期</th>
+                            <th>应还日期</th>
+                            <th>逾期天数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for borrowing in overdue_borrowings %}
+                        <tr>
+                            <td>{{ borrowing.user.username }}</td>
+                            <td>{{ borrowing.book.title }}</td>
+                            <td>{{ borrowing.borrow_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ borrowing.due_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="text-danger">
+                                <strong>{{ (moment() - borrowing.due_date).days }}天</strong>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('book.book_detail', id=borrowing.book.id) }}" class="btn btn-sm btn-outline-primary">
+                                    查看图书
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 当前借阅 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-book-open"></i> 当前借阅
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if active_borrowings %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>用户</th>
+                                <th>图书</th>
+                                <th>借阅日期</th>
+                                <th>应还日期</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for borrowing in active_borrowings %}
+                            <tr{% if borrowing.is_overdue %} class="table-warning"{% endif %}>
+                                <td>{{ borrowing.user.username }}</td>
+                                <td>{{ borrowing.book.title }}</td>
+                                <td>{{ borrowing.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ borrowing.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if borrowing.is_overdue %}
+                                        <span class="badge badge-danger">已逾期</span>
+                                    {% else %}
+                                        <span class="badge badge-success">还有 {{ borrowing.days_until_due }} 天</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('book.book_detail', id=borrowing.book.id) }}" class="btn btn-sm btn-outline-primary">
+                                        查看图书
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-book-open fa-2x mb-3"></i>
+                    <p>当前无借阅记录</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 所有借阅记录 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> 所有借阅记录
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if all_pagination.items %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>用户</th>
+                                <th>图书</th>
+                                <th>借阅日期</th>
+                                <th>应还日期</th>
+                                <th>归还日期</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for borrowing in all_pagination.items %}
+                            <tr>
+                                <td>{{ borrowing.user.username }}</td>
+                                <td>{{ borrowing.book.title }}</td>
+                                <td>{{ borrowing.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ borrowing.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if borrowing.return_date %}
+                                        {{ borrowing.return_date.strftime('%Y-%m-%d') }}
+                                    {% else %}
+                                        <span class="text-muted">未归还</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if borrowing.is_returned %}
+                                        <span class="badge badge-success">已归还</span>
+                                    {% elif borrowing.is_overdue %}
+                                        <span class="badge badge-danger">逾期</span>
+                                    {% else %}
+                                        <span class="badge badge-primary">借阅中</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('book.book_detail', id=borrowing.book.id) }}" class="btn btn-sm btn-outline-primary">
+                                        查看图书
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                {% if all_pagination.pages > 1 %}
+                <nav aria-label="分页导航">
+                    <ul class="pagination justify-content-center">
+                        {% if all_pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('borrowing.admin_borrowings', page=all_pagination.prev_num) }}">上一页</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in all_pagination.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != all_pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('borrowing.admin_borrowings', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if all_pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('borrowing.admin_borrowings', page=all_pagination.next_num) }}">下一页</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-list fa-2x mb-3"></i>
+                    <p>暂无借阅记录</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

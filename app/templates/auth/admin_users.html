@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理 - 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3><i class="fas fa-users"></i> 用户管理</h3>
+                <span class="badge bg-info">管理员功能</span>
+            </div>
+            <div class="card-body">
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>用户类型</th>
+                                <th>注册时间</th>
+                                <th>上次登录</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>
+                                    {{ user.username }}
+                                    {% if user.id == current_user.id %}
+                                    <span class="badge bg-primary">当前用户</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'danger' if user.is_admin else 'secondary' }}">
+                                        {{ '管理员' if user.is_admin else '普通用户' }}
+                                    </span>
+                                </td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if user.last_login %}
+                                        {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                    {% else %}
+                                        <span class="text-muted">从未登录</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.id != current_user.id %}
+                                    <a href="{{ url_for('auth.toggle_admin', user_id=user.id) }}" 
+                                       class="btn btn-sm btn-outline-{{ 'warning' if user.is_admin else 'success' }}"
+                                       onclick="return confirm('确定要{{ '取消' if user.is_admin else '设置' }}用户 {{ user.username }} 的管理员权限吗？')">
+                                        <i class="fas fa-{{ 'user-minus' if user.is_admin else 'user-plus' }}"></i>
+                                        {{ '取消管理员' if user.is_admin else '设为管理员' }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">当前用户</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center">
+                    <p class="text-muted">暂无用户数据</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回个人资料
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

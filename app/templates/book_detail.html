@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} - 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3><i class="fas fa-book"></i> 图书详情</h3>
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <!-- 管理员操作按钮 -->
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('book.edit_book', id=book.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <a href="{{ url_for('borrowing.set_copies', book_id=book.id) }}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-copy"></i> 设置副本
+                    </a>
+                    <form id="toggle-form-{{ book.id }}" method="POST" action="{{ url_for('book.toggle_availability', id=book.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-outline-{{ 'warning' if book.available else 'success' }} btn-sm" style="border-left: 0;">
+                            <i class="fas fa-{{ 'times' if book.available else 'check' }}"></i> 
+                            {{ '设为不可借阅' if book.available else '设为可借阅' }}
+                        </button>
+                    </form>
+                    <form id="delete-form-{{ book.id }}" method="POST" action="{{ url_for('book.delete_book', id=book.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" style="border-left: 0;">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h2 class="mb-3">{{ book.title }}</h2>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>作者：</strong></div>
+                            <div class="col-sm-9">{{ book.author }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>ISBN：</strong></div>
+                            <div class="col-sm-9">{{ book.isbn }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>出版年份：</strong></div>
+                            <div class="col-sm-9">{{ book.publication_year }}</div>
+                        </div>
+                        
+                        {% if book.genre %}
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>类型：</strong></div>
+                            <div class="col-sm-9">
+                                <span class="badge bg-secondary">{{ book.genre }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>借阅状态：</strong></div>
+                            <div class="col-sm-9">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-{{ 'success' if book.available else 'secondary' }} fs-6 me-3">
+                                        <i class="fas fa-{{ 'check' if book.available else 'times' }}"></i>
+                                        {{ '可借阅' if book.available else '不可借阅' }}
+                                    </span>
+                                    <span class="text-muted">
+                                        可借阅副本：{{ book.available_copies }}/{{ book.total_copies }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>添加时间：</strong></div>
+                            <div class="col-sm-9">{{ book.created_at.strftime('%Y年%m月%d日 %H:%M') }}</div>
+                        </div>
+                        
+                        {% if book.description %}
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>描述：</strong></div>
+                            <div class="col-sm-9">
+                                <div class="border p-3 rounded bg-light">
+                                    {{ book.description }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('book.list_books') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回图书列表
+                    </a>
+                    
+                    {% if current_user.is_authenticated and not current_user.is_admin %}
+                    <!-- 普通用户借阅按钮 -->
+                    <div>
+                        {% if book.is_available_for_borrow %}
+                            {% set user_borrowed = book.borrowing_records | selectattr('user_id', 'equalto', current_user.id) | selectattr('is_returned', 'equalto', false) | list | length > 0 %}
+                            
+                            {% if user_borrowed %}
+                                <span class="badge badge-info me-2">您已借阅此书</span>
+                            {% else %}
+                                <a href="{{ url_for('borrowing.borrow_book', book_id=book.id) }}" class="btn btn-success">
+                                    <i class="fas fa-book"></i> 借阅图书
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">暂无可借阅副本</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 处理切换可借阅状态的表单
+    const toggleForm = document.getElementById('toggle-form-{{ book.id }}');
+    if (toggleForm) {
+        toggleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 显示成功消息
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    // 插入到页面顶部
+                    const container = document.querySelector('.container');
+                    container.insertBefore(alertDiv, container.firstChild);
+                    
+                    // 刷新页面以更新状态显示
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    alert('操作失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败，请稍后再试');
+            });
+        });
+    }
+    
+    // 处理删除图书的表单
+    const deleteForm = document.getElementById('delete-form-{{ book.id }}');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 确认删除
+            if (!confirm('确定要删除《{{ book.title }}》吗？此操作无法撤销。')) {
+                return;
+            }
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 显示成功消息
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    // 插入到页面顶部
+                    const container = document.querySelector('.container');
+                    container.insertBefore(alertDiv, container.firstChild);
+                    
+                    // 跳转到图书列表页面
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('book.list_books') }}";
+                    }, 1500);
+                } else {
+                    alert('删除失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('删除失败，请稍后再试');
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

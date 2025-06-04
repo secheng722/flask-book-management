@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}借阅确认 - 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">借阅确认</h4>
+                </div>
+                <div class="card-body">
+                    <div class="book-info mb-4">
+                        <h5>{{ book.title }}</h5>
+                        <p class="text-muted">作者：{{ book.author }}</p>
+                        <p class="text-muted">ISBN：{{ book.isbn }}</p>
+                        <p class="text-muted">出版年份：{{ book.publication_year }}</p>
+                        {% if book.genre %}
+                        <p class="text-muted">类型：{{ book.genre }}</p>
+                        {% endif %}
+                        <p class="text-success">
+                            <i class="fas fa-check-circle"></i>
+                            可借阅副本：{{ book.available_copies }}/{{ book.total_copies }}
+                        </p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>借阅须知：</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>借阅期限为14天</li>
+                            <li>请按时归还，避免逾期</li>
+                            <li>每本书同时只能借阅一本</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="POST">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('book.book_detail', id=book.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> 返回
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-book"></i> 确认借阅
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
