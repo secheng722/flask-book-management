@@ -24,6 +24,6 @@ export DB_NAME="bookmanagement"
 
 # 启动应用程序
 echo "正在启动Flask应用..."
-echo "应用将在8000端口运行 - 访问地址：http://服务器IP:8000"
+echo "应用将在80端口运行 - 访问地址：http://服务器IP:80"
 # 使用Flask内置服务器启动应用，绑定到所有接口，允许从外部访问
 python run.py
